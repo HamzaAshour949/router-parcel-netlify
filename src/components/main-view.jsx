@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 function MainView() {
   return (
     <>
-      <BrowserRouter basename="/">
+      <BrowserRouter>
         <Routes>
           <Route
             path="/"
