@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
-import { TestView } from "./test-view";
 
 function MainView() {
   return (
@@ -10,7 +9,6 @@ function MainView() {
             path="/"
             element={
               <>
-                <TestView />
                 <ul>
                   <li>
                     <Link to={`/`}>homepagee</Link>
