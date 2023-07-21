@@ -142,9 +142,440 @@
       this[globalName] = mainExports;
     }
   }
-})({"1xC6H":[function(require,module,exports) {
-var Refresh = require("bf66039b955c5e19");
-var ErrorOverlay = require("2042a64d10d34e94");
+})({"4s3Ar":[function(require,module,exports) {
+var global = arguments[3];
+var HMR_HOST = null;
+var HMR_PORT = null;
+var HMR_SECURE = false;
+var HMR_ENV_HASH = "d6ea1d42532a7575";
+module.bundle.HMR_BUNDLE_ID = "022c1b16b4b6dfad";
+"use strict";
+/* global HMR_HOST, HMR_PORT, HMR_ENV_HASH, HMR_SECURE, chrome, browser, __parcel__import__, __parcel__importScripts__, ServiceWorkerGlobalScope */ /*::
+import type {
+  HMRAsset,
+  HMRMessage,
+} from '@parcel/reporter-dev-server/src/HMRServer.js';
+interface ParcelRequire {
+  (string): mixed;
+  cache: {|[string]: ParcelModule|};
+  hotData: {|[string]: mixed|};
+  Module: any;
+  parent: ?ParcelRequire;
+  isParcelRequire: true;
+  modules: {|[string]: [Function, {|[string]: string|}]|};
+  HMR_BUNDLE_ID: string;
+  root: ParcelRequire;
+}
+interface ParcelModule {
+  hot: {|
+    data: mixed,
+    accept(cb: (Function) => void): void,
+    dispose(cb: (mixed) => void): void,
+    // accept(deps: Array<string> | string, cb: (Function) => void): void,
+    // decline(): void,
+    _acceptCallbacks: Array<(Function) => void>,
+    _disposeCallbacks: Array<(mixed) => void>,
+  |};
+}
+interface ExtensionContext {
+  runtime: {|
+    reload(): void,
+    getURL(url: string): string;
+    getManifest(): {manifest_version: number, ...};
+  |};
+}
+declare var module: {bundle: ParcelRequire, ...};
+declare var HMR_HOST: string;
+declare var HMR_PORT: string;
+declare var HMR_ENV_HASH: string;
+declare var HMR_SECURE: boolean;
+declare var chrome: ExtensionContext;
+declare var browser: ExtensionContext;
+declare var __parcel__import__: (string) => Promise<void>;
+declare var __parcel__importScripts__: (string) => Promise<void>;
+declare var globalThis: typeof self;
+declare var ServiceWorkerGlobalScope: Object;
+*/ var OVERLAY_ID = "__parcel__error__overlay__";
+var OldModule = module.bundle.Module;
+function Module(moduleName) {
+    OldModule.call(this, moduleName);
+    this.hot = {
+        data: module.bundle.hotData[moduleName],
+        _acceptCallbacks: [],
+        _disposeCallbacks: [],
+        accept: function(fn) {
+            this._acceptCallbacks.push(fn || function() {});
+        },
+        dispose: function(fn) {
+            this._disposeCallbacks.push(fn);
+        }
+    };
+    module.bundle.hotData[moduleName] = undefined;
+}
+module.bundle.Module = Module;
+module.bundle.hotData = {};
+var checkedAssets /*: {|[string]: boolean|} */ , assetsToDispose /*: Array<[ParcelRequire, string]> */ , assetsToAccept /*: Array<[ParcelRequire, string]> */ ;
+function getHostname() {
+    return HMR_HOST || (location.protocol.indexOf("http") === 0 ? location.hostname : "localhost");
+}
+function getPort() {
+    return HMR_PORT || location.port;
+}
+// eslint-disable-next-line no-redeclare
+var parent = module.bundle.parent;
+if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== "undefined") {
+    var hostname = getHostname();
+    var port = getPort();
+    var protocol = HMR_SECURE || location.protocol == "https:" && !/localhost|127.0.0.1|0.0.0.0/.test(hostname) ? "wss" : "ws";
+    var ws = new WebSocket(protocol + "://" + hostname + (port ? ":" + port : "") + "/");
+    // Web extension context
+    var extCtx = typeof chrome === "undefined" ? typeof browser === "undefined" ? null : browser : chrome;
+    // Safari doesn't support sourceURL in error stacks.
+    // eval may also be disabled via CSP, so do a quick check.
+    var supportsSourceURL = false;
+    try {
+        (0, eval)('throw new Error("test"); //# sourceURL=test.js');
+    } catch (err) {
+        supportsSourceURL = err.stack.includes("test.js");
+    }
+    // $FlowFixMe
+    ws.onmessage = async function(event /*: {data: string, ...} */ ) {
+        checkedAssets = {} /*: {|[string]: boolean|} */ ;
+        assetsToAccept = [];
+        assetsToDispose = [];
+        var data /*: HMRMessage */  = JSON.parse(event.data);
+        if (data.type === "update") {
+            // Remove error overlay if there is one
+            if (typeof document !== "undefined") removeErrorOverlay();
+            let assets = data.assets.filter((asset)=>asset.envHash === HMR_ENV_HASH);
+            // Handle HMR Update
+            let handled = assets.every((asset)=>{
+                return asset.type === "css" || asset.type === "js" && hmrAcceptCheck(module.bundle.root, asset.id, asset.depsByBundle);
+            });
+            if (handled) {
+                console.clear();
+                // Dispatch custom event so other runtimes (e.g React Refresh) are aware.
+                if (typeof window !== "undefined" && typeof CustomEvent !== "undefined") window.dispatchEvent(new CustomEvent("parcelhmraccept"));
+                await hmrApplyUpdates(assets);
+                // Dispose all old assets.
+                let processedAssets = {} /*: {|[string]: boolean|} */ ;
+                for(let i = 0; i < assetsToDispose.length; i++){
+                    let id = assetsToDispose[i][1];
+                    if (!processedAssets[id]) {
+                        hmrDispose(assetsToDispose[i][0], id);
+                        processedAssets[id] = true;
+                    }
+                }
+                // Run accept callbacks. This will also re-execute other disposed assets in topological order.
+                processedAssets = {};
+                for(let i = 0; i < assetsToAccept.length; i++){
+                    let id = assetsToAccept[i][1];
+                    if (!processedAssets[id]) {
+                        hmrAccept(assetsToAccept[i][0], id);
+                        processedAssets[id] = true;
+                    }
+                }
+            } else fullReload();
+        }
+        if (data.type === "error") {
+            // Log parcel errors to console
+            for (let ansiDiagnostic of data.diagnostics.ansi){
+                let stack = ansiDiagnostic.codeframe ? ansiDiagnostic.codeframe : ansiDiagnostic.stack;
+                console.error("\uD83D\uDEA8 [parcel]: " + ansiDiagnostic.message + "\n" + stack + "\n\n" + ansiDiagnostic.hints.join("\n"));
+            }
+            if (typeof document !== "undefined") {
+                // Render the fancy html overlay
+                removeErrorOverlay();
+                var overlay = createErrorOverlay(data.diagnostics.html);
+                // $FlowFixMe
+                document.body.appendChild(overlay);
+            }
+        }
+    };
+    ws.onerror = function(e) {
+        console.error(e.message);
+    };
+    ws.onclose = function() {
+        console.warn("[parcel] \uD83D\uDEA8 Connection to the HMR server was lost");
+    };
+}
+function removeErrorOverlay() {
+    var overlay = document.getElementById(OVERLAY_ID);
+    if (overlay) {
+        overlay.remove();
+        console.log("[parcel] ✨ Error resolved");
+    }
+}
+function createErrorOverlay(diagnostics) {
+    var overlay = document.createElement("div");
+    overlay.id = OVERLAY_ID;
+    let errorHTML = '<div style="background: black; opacity: 0.85; font-size: 16px; color: white; position: fixed; height: 100%; width: 100%; top: 0px; left: 0px; padding: 30px; font-family: Menlo, Consolas, monospace; z-index: 9999;">';
+    for (let diagnostic of diagnostics){
+        let stack = diagnostic.frames.length ? diagnostic.frames.reduce((p, frame)=>{
+            return `${p}
+<a href="/__parcel_launch_editor?file=${encodeURIComponent(frame.location)}" style="text-decoration: underline; color: #888" onclick="fetch(this.href); return false">${frame.location}</a>
+${frame.code}`;
+        }, "") : diagnostic.stack;
+        errorHTML += `
+      <div>
+        <div style="font-size: 18px; font-weight: bold; margin-top: 20px;">
+          🚨 ${diagnostic.message}
+        </div>
+        <pre>${stack}</pre>
+        <div>
+          ${diagnostic.hints.map((hint)=>"<div>\uD83D\uDCA1 " + hint + "</div>").join("")}
+        </div>
+        ${diagnostic.documentation ? `<div>📝 <a style="color: violet" href="${diagnostic.documentation}" target="_blank">Learn more</a></div>` : ""}
+      </div>
+    `;
+    }
+    errorHTML += "</div>";
+    overlay.innerHTML = errorHTML;
+    return overlay;
+}
+function fullReload() {
+    if ("reload" in location) location.reload();
+    else if (extCtx && extCtx.runtime && extCtx.runtime.reload) extCtx.runtime.reload();
+}
+function getParents(bundle, id) /*: Array<[ParcelRequire, string]> */ {
+    var modules = bundle.modules;
+    if (!modules) return [];
+    var parents = [];
+    var k, d, dep;
+    for(k in modules)for(d in modules[k][1]){
+        dep = modules[k][1][d];
+        if (dep === id || Array.isArray(dep) && dep[dep.length - 1] === id) parents.push([
+            bundle,
+            k
+        ]);
+    }
+    if (bundle.parent) parents = parents.concat(getParents(bundle.parent, id));
+    return parents;
+}
+function updateLink(link) {
+    var href = link.getAttribute("href");
+    if (!href) return;
+    var newLink = link.cloneNode();
+    newLink.onload = function() {
+        if (link.parentNode !== null) // $FlowFixMe
+        link.parentNode.removeChild(link);
+    };
+    newLink.setAttribute("href", // $FlowFixMe
+    href.split("?")[0] + "?" + Date.now());
+    // $FlowFixMe
+    link.parentNode.insertBefore(newLink, link.nextSibling);
+}
+var cssTimeout = null;
+function reloadCSS() {
+    if (cssTimeout) return;
+    cssTimeout = setTimeout(function() {
+        var links = document.querySelectorAll('link[rel="stylesheet"]');
+        for(var i = 0; i < links.length; i++){
+            // $FlowFixMe[incompatible-type]
+            var href /*: string */  = links[i].getAttribute("href");
+            var hostname = getHostname();
+            var servedFromHMRServer = hostname === "localhost" ? new RegExp("^(https?:\\/\\/(0.0.0.0|127.0.0.1)|localhost):" + getPort()).test(href) : href.indexOf(hostname + ":" + getPort());
+            var absolute = /^https?:\/\//i.test(href) && href.indexOf(location.origin) !== 0 && !servedFromHMRServer;
+            if (!absolute) updateLink(links[i]);
+        }
+        cssTimeout = null;
+    }, 50);
+}
+function hmrDownload(asset) {
+    if (asset.type === "js") {
+        if (typeof document !== "undefined") {
+            let script = document.createElement("script");
+            script.src = asset.url + "?t=" + Date.now();
+            if (asset.outputFormat === "esmodule") script.type = "module";
+            return new Promise((resolve, reject)=>{
+                var _document$head;
+                script.onload = ()=>resolve(script);
+                script.onerror = reject;
+                (_document$head = document.head) === null || _document$head === void 0 || _document$head.appendChild(script);
+            });
+        } else if (typeof importScripts === "function") {
+            // Worker scripts
+            if (asset.outputFormat === "esmodule") return import(asset.url + "?t=" + Date.now());
+            else return new Promise((resolve, reject)=>{
+                try {
+                    importScripts(asset.url + "?t=" + Date.now());
+                    resolve();
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        }
+    }
+}
+async function hmrApplyUpdates(assets) {
+    global.parcelHotUpdate = Object.create(null);
+    let scriptsToRemove;
+    try {
+        // If sourceURL comments aren't supported in eval, we need to load
+        // the update from the dev server over HTTP so that stack traces
+        // are correct in errors/logs. This is much slower than eval, so
+        // we only do it if needed (currently just Safari).
+        // https://bugs.webkit.org/show_bug.cgi?id=137297
+        // This path is also taken if a CSP disallows eval.
+        if (!supportsSourceURL) {
+            let promises = assets.map((asset)=>{
+                var _hmrDownload;
+                return (_hmrDownload = hmrDownload(asset)) === null || _hmrDownload === void 0 ? void 0 : _hmrDownload.catch((err)=>{
+                    // Web extension bugfix for Chromium
+                    // https://bugs.chromium.org/p/chromium/issues/detail?id=1255412#c12
+                    if (extCtx && extCtx.runtime && extCtx.runtime.getManifest().manifest_version == 3) {
+                        if (typeof ServiceWorkerGlobalScope != "undefined" && global instanceof ServiceWorkerGlobalScope) {
+                            extCtx.runtime.reload();
+                            return;
+                        }
+                        asset.url = extCtx.runtime.getURL("/__parcel_hmr_proxy__?url=" + encodeURIComponent(asset.url + "?t=" + Date.now()));
+                        return hmrDownload(asset);
+                    }
+                    throw err;
+                });
+            });
+            scriptsToRemove = await Promise.all(promises);
+        }
+        assets.forEach(function(asset) {
+            hmrApply(module.bundle.root, asset);
+        });
+    } finally{
+        delete global.parcelHotUpdate;
+        if (scriptsToRemove) scriptsToRemove.forEach((script)=>{
+            if (script) {
+                var _document$head2;
+                (_document$head2 = document.head) === null || _document$head2 === void 0 || _document$head2.removeChild(script);
+            }
+        });
+    }
+}
+function hmrApply(bundle /*: ParcelRequire */ , asset /*:  HMRAsset */ ) {
+    var modules = bundle.modules;
+    if (!modules) return;
+    if (asset.type === "css") reloadCSS();
+    else if (asset.type === "js") {
+        let deps = asset.depsByBundle[bundle.HMR_BUNDLE_ID];
+        if (deps) {
+            if (modules[asset.id]) {
+                // Remove dependencies that are removed and will become orphaned.
+                // This is necessary so that if the asset is added back again, the cache is gone, and we prevent a full page reload.
+                let oldDeps = modules[asset.id][1];
+                for(let dep in oldDeps)if (!deps[dep] || deps[dep] !== oldDeps[dep]) {
+                    let id = oldDeps[dep];
+                    let parents = getParents(module.bundle.root, id);
+                    if (parents.length === 1) hmrDelete(module.bundle.root, id);
+                }
+            }
+            if (supportsSourceURL) // Global eval. We would use `new Function` here but browser
+            // support for source maps is better with eval.
+            (0, eval)(asset.output);
+            // $FlowFixMe
+            let fn = global.parcelHotUpdate[asset.id];
+            modules[asset.id] = [
+                fn,
+                deps
+            ];
+        } else if (bundle.parent) hmrApply(bundle.parent, asset);
+    }
+}
+function hmrDelete(bundle, id) {
+    let modules = bundle.modules;
+    if (!modules) return;
+    if (modules[id]) {
+        // Collect dependencies that will become orphaned when this module is deleted.
+        let deps = modules[id][1];
+        let orphans = [];
+        for(let dep in deps){
+            let parents = getParents(module.bundle.root, deps[dep]);
+            if (parents.length === 1) orphans.push(deps[dep]);
+        }
+        // Delete the module. This must be done before deleting dependencies in case of circular dependencies.
+        delete modules[id];
+        delete bundle.cache[id];
+        // Now delete the orphans.
+        orphans.forEach((id)=>{
+            hmrDelete(module.bundle.root, id);
+        });
+    } else if (bundle.parent) hmrDelete(bundle.parent, id);
+}
+function hmrAcceptCheck(bundle /*: ParcelRequire */ , id /*: string */ , depsByBundle /*: ?{ [string]: { [string]: string } }*/ ) {
+    if (hmrAcceptCheckOne(bundle, id, depsByBundle)) return true;
+    // Traverse parents breadth first. All possible ancestries must accept the HMR update, or we'll reload.
+    let parents = getParents(module.bundle.root, id);
+    let accepted = false;
+    while(parents.length > 0){
+        let v = parents.shift();
+        let a = hmrAcceptCheckOne(v[0], v[1], null);
+        if (a) // If this parent accepts, stop traversing upward, but still consider siblings.
+        accepted = true;
+        else {
+            // Otherwise, queue the parents in the next level upward.
+            let p = getParents(module.bundle.root, v[1]);
+            if (p.length === 0) {
+                // If there are no parents, then we've reached an entry without accepting. Reload.
+                accepted = false;
+                break;
+            }
+            parents.push(...p);
+        }
+    }
+    return accepted;
+}
+function hmrAcceptCheckOne(bundle /*: ParcelRequire */ , id /*: string */ , depsByBundle /*: ?{ [string]: { [string]: string } }*/ ) {
+    var modules = bundle.modules;
+    if (!modules) return;
+    if (depsByBundle && !depsByBundle[bundle.HMR_BUNDLE_ID]) {
+        // If we reached the root bundle without finding where the asset should go,
+        // there's nothing to do. Mark as "accepted" so we don't reload the page.
+        if (!bundle.parent) return true;
+        return hmrAcceptCheck(bundle.parent, id, depsByBundle);
+    }
+    if (checkedAssets[id]) return true;
+    checkedAssets[id] = true;
+    var cached = bundle.cache[id];
+    assetsToDispose.push([
+        bundle,
+        id
+    ]);
+    if (!cached || cached.hot && cached.hot._acceptCallbacks.length) {
+        assetsToAccept.push([
+            bundle,
+            id
+        ]);
+        return true;
+    }
+}
+function hmrDispose(bundle /*: ParcelRequire */ , id /*: string */ ) {
+    var cached = bundle.cache[id];
+    bundle.hotData[id] = {};
+    if (cached && cached.hot) cached.hot.data = bundle.hotData[id];
+    if (cached && cached.hot && cached.hot._disposeCallbacks.length) cached.hot._disposeCallbacks.forEach(function(cb) {
+        cb(bundle.hotData[id]);
+    });
+    delete bundle.cache[id];
+}
+function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
+    // Execute the module.
+    bundle(id);
+    // Run the accept callbacks in the new version of the module.
+    var cached = bundle.cache[id];
+    if (cached && cached.hot && cached.hot._acceptCallbacks.length) cached.hot._acceptCallbacks.forEach(function(cb) {
+        var assetsToAlsoAccept = cb(function() {
+            return getParents(module.bundle.root, id);
+        });
+        if (assetsToAlsoAccept && assetsToAccept.length) {
+            assetsToAlsoAccept.forEach(function(a) {
+                hmrDispose(a[0], a[1]);
+            });
+            // $FlowFixMe[method-unbinding]
+            assetsToAccept.push.apply(assetsToAccept, assetsToAlsoAccept);
+        }
+    });
+}
+
+},{}],"1xC6H":[function(require,module,exports) {
+var Refresh = require("6d18d6bd340e7473");
+var ErrorOverlay = require("74ad5ea14201648c");
 Refresh.injectIntoGlobalHook(window);
 window.$RefreshReg$ = function() {};
 window.$RefreshSig$ = function() {
@@ -163,11 +594,11 @@ window.addEventListener("parcelhmraccept", ()=>{
     ErrorOverlay.dismissRuntimeErrors();
 });
 
-},{"bf66039b955c5e19":"786KC","2042a64d10d34e94":"1dldy"}],"786KC":[function(require,module,exports) {
+},{"6d18d6bd340e7473":"786KC","74ad5ea14201648c":"1dldy"}],"786KC":[function(require,module,exports) {
 "use strict";
-module.exports = require("3f195197f578dfb7");
+module.exports = require("96622d495519d4e");
 
-},{"3f195197f578dfb7":"hdge7"}],"hdge7":[function(require,module,exports) {
+},{"96622d495519d4e":"hdge7"}],"hdge7":[function(require,module,exports) {
 /** @license React v0.9.0
  * react-refresh-runtime.development.js
  *
@@ -628,7 +1059,7 @@ module.exports = require("3f195197f578dfb7");
 })();
 
 },{}],"1dldy":[function(require,module,exports) {
-var process = require("df4950bf8be8ab03");
+var process = require("d1546958eb39fdcf");
 !function(e, t) {
     module.exports = t();
 }(window, function() {
@@ -2358,7 +2789,7 @@ var process = require("df4950bf8be8ab03");
     ]);
 });
 
-},{"df4950bf8be8ab03":"d5jf4"}],"d5jf4":[function(require,module,exports) {
+},{"d1546958eb39fdcf":"d5jf4"}],"d5jf4":[function(require,module,exports) {
 // shim for using process in browser
 var process = module.exports = {};
 // cached from whatever global is present so that test runners that stub it
@@ -2503,420 +2934,6 @@ process.umask = function() {
     return 0;
 };
 
-},{}],"7a1Sg":[function(require,module,exports) {
-var global = arguments[3];
-var HMR_HOST = null;
-var HMR_PORT = null;
-var HMR_SECURE = false;
-var HMR_ENV_HASH = "d6ea1d42532a7575";
-module.bundle.HMR_BUNDLE_ID = "022c1b16b4b6dfad";
-"use strict";
-/* global HMR_HOST, HMR_PORT, HMR_ENV_HASH, HMR_SECURE, chrome, browser, globalThis, __parcel__import__, __parcel__importScripts__, ServiceWorkerGlobalScope */ /*::
-import type {
-  HMRAsset,
-  HMRMessage,
-} from '@parcel/reporter-dev-server/src/HMRServer.js';
-interface ParcelRequire {
-  (string): mixed;
-  cache: {|[string]: ParcelModule|};
-  hotData: {|[string]: mixed|};
-  Module: any;
-  parent: ?ParcelRequire;
-  isParcelRequire: true;
-  modules: {|[string]: [Function, {|[string]: string|}]|};
-  HMR_BUNDLE_ID: string;
-  root: ParcelRequire;
-}
-interface ParcelModule {
-  hot: {|
-    data: mixed,
-    accept(cb: (Function) => void): void,
-    dispose(cb: (mixed) => void): void,
-    // accept(deps: Array<string> | string, cb: (Function) => void): void,
-    // decline(): void,
-    _acceptCallbacks: Array<(Function) => void>,
-    _disposeCallbacks: Array<(mixed) => void>,
-  |};
-}
-interface ExtensionContext {
-  runtime: {|
-    reload(): void,
-    getURL(url: string): string;
-    getManifest(): {manifest_version: number, ...};
-  |};
-}
-declare var module: {bundle: ParcelRequire, ...};
-declare var HMR_HOST: string;
-declare var HMR_PORT: string;
-declare var HMR_ENV_HASH: string;
-declare var HMR_SECURE: boolean;
-declare var chrome: ExtensionContext;
-declare var browser: ExtensionContext;
-declare var __parcel__import__: (string) => Promise<void>;
-declare var __parcel__importScripts__: (string) => Promise<void>;
-declare var globalThis: typeof self;
-declare var ServiceWorkerGlobalScope: Object;
-*/ var OVERLAY_ID = "__parcel__error__overlay__";
-var OldModule = module.bundle.Module;
-function Module(moduleName) {
-    OldModule.call(this, moduleName);
-    this.hot = {
-        data: module.bundle.hotData[moduleName],
-        _acceptCallbacks: [],
-        _disposeCallbacks: [],
-        accept: function(fn) {
-            this._acceptCallbacks.push(fn || function() {});
-        },
-        dispose: function(fn) {
-            this._disposeCallbacks.push(fn);
-        }
-    };
-    module.bundle.hotData[moduleName] = undefined;
-}
-module.bundle.Module = Module;
-module.bundle.hotData = {};
-var checkedAssets, assetsToDispose, assetsToAccept /*: Array<[ParcelRequire, string]> */ ;
-function getHostname() {
-    return HMR_HOST || (location.protocol.indexOf("http") === 0 ? location.hostname : "localhost");
-}
-function getPort() {
-    return HMR_PORT || location.port;
-} // eslint-disable-next-line no-redeclare
-var parent = module.bundle.parent;
-if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== "undefined") {
-    var hostname = getHostname();
-    var port = getPort();
-    var protocol = HMR_SECURE || location.protocol == "https:" && !/localhost|127.0.0.1|0.0.0.0/.test(hostname) ? "wss" : "ws";
-    var ws = new WebSocket(protocol + "://" + hostname + (port ? ":" + port : "") + "/"); // Web extension context
-    var extCtx = typeof chrome === "undefined" ? typeof browser === "undefined" ? null : browser : chrome; // Safari doesn't support sourceURL in error stacks.
-    // eval may also be disabled via CSP, so do a quick check.
-    var supportsSourceURL = false;
-    try {
-        (0, eval)('throw new Error("test"); //# sourceURL=test.js');
-    } catch (err) {
-        supportsSourceURL = err.stack.includes("test.js");
-    } // $FlowFixMe
-    ws.onmessage = async function(event) {
-        checkedAssets = {} /*: {|[string]: boolean|} */ ;
-        assetsToAccept = [];
-        assetsToDispose = [];
-        var data = JSON.parse(event.data);
-        if (data.type === "update") {
-            // Remove error overlay if there is one
-            if (typeof document !== "undefined") removeErrorOverlay();
-            let assets = data.assets.filter((asset)=>asset.envHash === HMR_ENV_HASH); // Handle HMR Update
-            let handled = assets.every((asset)=>{
-                return asset.type === "css" || asset.type === "js" && hmrAcceptCheck(module.bundle.root, asset.id, asset.depsByBundle);
-            });
-            if (handled) {
-                console.clear(); // Dispatch custom event so other runtimes (e.g React Refresh) are aware.
-                if (typeof window !== "undefined" && typeof CustomEvent !== "undefined") window.dispatchEvent(new CustomEvent("parcelhmraccept"));
-                await hmrApplyUpdates(assets); // Dispose all old assets.
-                let processedAssets = {} /*: {|[string]: boolean|} */ ;
-                for(let i = 0; i < assetsToDispose.length; i++){
-                    let id = assetsToDispose[i][1];
-                    if (!processedAssets[id]) {
-                        hmrDispose(assetsToDispose[i][0], id);
-                        processedAssets[id] = true;
-                    }
-                } // Run accept callbacks. This will also re-execute other disposed assets in topological order.
-                processedAssets = {};
-                for(let i = 0; i < assetsToAccept.length; i++){
-                    let id = assetsToAccept[i][1];
-                    if (!processedAssets[id]) {
-                        hmrAccept(assetsToAccept[i][0], id);
-                        processedAssets[id] = true;
-                    }
-                }
-            } else fullReload();
-        }
-        if (data.type === "error") {
-            // Log parcel errors to console
-            for (let ansiDiagnostic of data.diagnostics.ansi){
-                let stack = ansiDiagnostic.codeframe ? ansiDiagnostic.codeframe : ansiDiagnostic.stack;
-                console.error("\uD83D\uDEA8 [parcel]: " + ansiDiagnostic.message + "\n" + stack + "\n\n" + ansiDiagnostic.hints.join("\n"));
-            }
-            if (typeof document !== "undefined") {
-                // Render the fancy html overlay
-                removeErrorOverlay();
-                var overlay = createErrorOverlay(data.diagnostics.html); // $FlowFixMe
-                document.body.appendChild(overlay);
-            }
-        }
-    };
-    ws.onerror = function(e) {
-        console.error(e.message);
-    };
-    ws.onclose = function() {
-        console.warn("[parcel] \uD83D\uDEA8 Connection to the HMR server was lost");
-    };
-}
-function removeErrorOverlay() {
-    var overlay = document.getElementById(OVERLAY_ID);
-    if (overlay) {
-        overlay.remove();
-        console.log("[parcel] ✨ Error resolved");
-    }
-}
-function createErrorOverlay(diagnostics) {
-    var overlay = document.createElement("div");
-    overlay.id = OVERLAY_ID;
-    let errorHTML = '<div style="background: black; opacity: 0.85; font-size: 16px; color: white; position: fixed; height: 100%; width: 100%; top: 0px; left: 0px; padding: 30px; font-family: Menlo, Consolas, monospace; z-index: 9999;">';
-    for (let diagnostic of diagnostics){
-        let stack = diagnostic.frames.length ? diagnostic.frames.reduce((p, frame)=>{
-            return `${p}
-<a href="/__parcel_launch_editor?file=${encodeURIComponent(frame.location)}" style="text-decoration: underline; color: #888" onclick="fetch(this.href); return false">${frame.location}</a>
-${frame.code}`;
-        }, "") : diagnostic.stack;
-        errorHTML += `
-      <div>
-        <div style="font-size: 18px; font-weight: bold; margin-top: 20px;">
-          🚨 ${diagnostic.message}
-        </div>
-        <pre>${stack}</pre>
-        <div>
-          ${diagnostic.hints.map((hint)=>"<div>\uD83D\uDCA1 " + hint + "</div>").join("")}
-        </div>
-        ${diagnostic.documentation ? `<div>📝 <a style="color: violet" href="${diagnostic.documentation}" target="_blank">Learn more</a></div>` : ""}
-      </div>
-    `;
-    }
-    errorHTML += "</div>";
-    overlay.innerHTML = errorHTML;
-    return overlay;
-}
-function fullReload() {
-    if ("reload" in location) location.reload();
-    else if (extCtx && extCtx.runtime && extCtx.runtime.reload) extCtx.runtime.reload();
-}
-function getParents(bundle, id) /*: Array<[ParcelRequire, string]> */ {
-    var modules = bundle.modules;
-    if (!modules) return [];
-    var parents = [];
-    var k, d, dep;
-    for(k in modules)for(d in modules[k][1]){
-        dep = modules[k][1][d];
-        if (dep === id || Array.isArray(dep) && dep[dep.length - 1] === id) parents.push([
-            bundle,
-            k
-        ]);
-    }
-    if (bundle.parent) parents = parents.concat(getParents(bundle.parent, id));
-    return parents;
-}
-function updateLink(link) {
-    var newLink = link.cloneNode();
-    newLink.onload = function() {
-        if (link.parentNode !== null) // $FlowFixMe
-        link.parentNode.removeChild(link);
-    };
-    newLink.setAttribute("href", link.getAttribute("href").split("?")[0] + "?" + Date.now()); // $FlowFixMe
-    link.parentNode.insertBefore(newLink, link.nextSibling);
-}
-var cssTimeout = null;
-function reloadCSS() {
-    if (cssTimeout) return;
-    cssTimeout = setTimeout(function() {
-        var links = document.querySelectorAll('link[rel="stylesheet"]');
-        for(var i = 0; i < links.length; i++){
-            // $FlowFixMe[incompatible-type]
-            var href = links[i].getAttribute("href");
-            var hostname = getHostname();
-            var servedFromHMRServer = hostname === "localhost" ? new RegExp("^(https?:\\/\\/(0.0.0.0|127.0.0.1)|localhost):" + getPort()).test(href) : href.indexOf(hostname + ":" + getPort());
-            var absolute = /^https?:\/\//i.test(href) && href.indexOf(location.origin) !== 0 && !servedFromHMRServer;
-            if (!absolute) updateLink(links[i]);
-        }
-        cssTimeout = null;
-    }, 50);
-}
-function hmrDownload(asset) {
-    if (asset.type === "js") {
-        if (typeof document !== "undefined") {
-            let script = document.createElement("script");
-            script.src = asset.url + "?t=" + Date.now();
-            if (asset.outputFormat === "esmodule") script.type = "module";
-            return new Promise((resolve, reject)=>{
-                var _document$head;
-                script.onload = ()=>resolve(script);
-                script.onerror = reject;
-                (_document$head = document.head) === null || _document$head === void 0 || _document$head.appendChild(script);
-            });
-        } else if (typeof importScripts === "function") {
-            // Worker scripts
-            if (asset.outputFormat === "esmodule") return import(asset.url + "?t=" + Date.now());
-            else return new Promise((resolve, reject)=>{
-                try {
-                    importScripts(asset.url + "?t=" + Date.now());
-                    resolve();
-                } catch (err) {
-                    reject(err);
-                }
-            });
-        }
-    }
-}
-async function hmrApplyUpdates(assets) {
-    global.parcelHotUpdate = Object.create(null);
-    let scriptsToRemove;
-    try {
-        // If sourceURL comments aren't supported in eval, we need to load
-        // the update from the dev server over HTTP so that stack traces
-        // are correct in errors/logs. This is much slower than eval, so
-        // we only do it if needed (currently just Safari).
-        // https://bugs.webkit.org/show_bug.cgi?id=137297
-        // This path is also taken if a CSP disallows eval.
-        if (!supportsSourceURL) {
-            let promises = assets.map((asset)=>{
-                var _hmrDownload;
-                return (_hmrDownload = hmrDownload(asset)) === null || _hmrDownload === void 0 ? void 0 : _hmrDownload.catch((err)=>{
-                    // Web extension bugfix for Chromium
-                    // https://bugs.chromium.org/p/chromium/issues/detail?id=1255412#c12
-                    if (extCtx && extCtx.runtime && extCtx.runtime.getManifest().manifest_version == 3) {
-                        if (typeof ServiceWorkerGlobalScope != "undefined" && global instanceof ServiceWorkerGlobalScope) {
-                            extCtx.runtime.reload();
-                            return;
-                        }
-                        asset.url = extCtx.runtime.getURL("/__parcel_hmr_proxy__?url=" + encodeURIComponent(asset.url + "?t=" + Date.now()));
-                        return hmrDownload(asset);
-                    }
-                    throw err;
-                });
-            });
-            scriptsToRemove = await Promise.all(promises);
-        }
-        assets.forEach(function(asset) {
-            hmrApply(module.bundle.root, asset);
-        });
-    } finally{
-        delete global.parcelHotUpdate;
-        if (scriptsToRemove) scriptsToRemove.forEach((script)=>{
-            if (script) {
-                var _document$head2;
-                (_document$head2 = document.head) === null || _document$head2 === void 0 || _document$head2.removeChild(script);
-            }
-        });
-    }
-}
-function hmrApply(bundle, asset) {
-    var modules = bundle.modules;
-    if (!modules) return;
-    if (asset.type === "css") reloadCSS();
-    else if (asset.type === "js") {
-        let deps = asset.depsByBundle[bundle.HMR_BUNDLE_ID];
-        if (deps) {
-            if (modules[asset.id]) {
-                // Remove dependencies that are removed and will become orphaned.
-                // This is necessary so that if the asset is added back again, the cache is gone, and we prevent a full page reload.
-                let oldDeps = modules[asset.id][1];
-                for(let dep in oldDeps)if (!deps[dep] || deps[dep] !== oldDeps[dep]) {
-                    let id = oldDeps[dep];
-                    let parents = getParents(module.bundle.root, id);
-                    if (parents.length === 1) hmrDelete(module.bundle.root, id);
-                }
-            }
-            if (supportsSourceURL) // Global eval. We would use `new Function` here but browser
-            // support for source maps is better with eval.
-            (0, eval)(asset.output);
-             // $FlowFixMe
-            let fn = global.parcelHotUpdate[asset.id];
-            modules[asset.id] = [
-                fn,
-                deps
-            ];
-        } else if (bundle.parent) hmrApply(bundle.parent, asset);
-    }
-}
-function hmrDelete(bundle, id) {
-    let modules = bundle.modules;
-    if (!modules) return;
-    if (modules[id]) {
-        // Collect dependencies that will become orphaned when this module is deleted.
-        let deps = modules[id][1];
-        let orphans = [];
-        for(let dep in deps){
-            let parents = getParents(module.bundle.root, deps[dep]);
-            if (parents.length === 1) orphans.push(deps[dep]);
-        } // Delete the module. This must be done before deleting dependencies in case of circular dependencies.
-        delete modules[id];
-        delete bundle.cache[id]; // Now delete the orphans.
-        orphans.forEach((id)=>{
-            hmrDelete(module.bundle.root, id);
-        });
-    } else if (bundle.parent) hmrDelete(bundle.parent, id);
-}
-function hmrAcceptCheck(bundle, id, depsByBundle) {
-    if (hmrAcceptCheckOne(bundle, id, depsByBundle)) return true;
-     // Traverse parents breadth first. All possible ancestries must accept the HMR update, or we'll reload.
-    let parents = getParents(module.bundle.root, id);
-    let accepted = false;
-    while(parents.length > 0){
-        let v = parents.shift();
-        let a = hmrAcceptCheckOne(v[0], v[1], null);
-        if (a) // If this parent accepts, stop traversing upward, but still consider siblings.
-        accepted = true;
-        else {
-            // Otherwise, queue the parents in the next level upward.
-            let p = getParents(module.bundle.root, v[1]);
-            if (p.length === 0) {
-                // If there are no parents, then we've reached an entry without accepting. Reload.
-                accepted = false;
-                break;
-            }
-            parents.push(...p);
-        }
-    }
-    return accepted;
-}
-function hmrAcceptCheckOne(bundle, id, depsByBundle) {
-    var modules = bundle.modules;
-    if (!modules) return;
-    if (depsByBundle && !depsByBundle[bundle.HMR_BUNDLE_ID]) {
-        // If we reached the root bundle without finding where the asset should go,
-        // there's nothing to do. Mark as "accepted" so we don't reload the page.
-        if (!bundle.parent) return true;
-        return hmrAcceptCheck(bundle.parent, id, depsByBundle);
-    }
-    if (checkedAssets[id]) return true;
-    checkedAssets[id] = true;
-    var cached = bundle.cache[id];
-    assetsToDispose.push([
-        bundle,
-        id
-    ]);
-    if (!cached || cached.hot && cached.hot._acceptCallbacks.length) {
-        assetsToAccept.push([
-            bundle,
-            id
-        ]);
-        return true;
-    }
-}
-function hmrDispose(bundle, id) {
-    var cached = bundle.cache[id];
-    bundle.hotData[id] = {};
-    if (cached && cached.hot) cached.hot.data = bundle.hotData[id];
-    if (cached && cached.hot && cached.hot._disposeCallbacks.length) cached.hot._disposeCallbacks.forEach(function(cb) {
-        cb(bundle.hotData[id]);
-    });
-    delete bundle.cache[id];
-}
-function hmrAccept(bundle, id) {
-    // Execute the module.
-    bundle(id); // Run the accept callbacks in the new version of the module.
-    var cached = bundle.cache[id];
-    if (cached && cached.hot && cached.hot._acceptCallbacks.length) cached.hot._acceptCallbacks.forEach(function(cb) {
-        var assetsToAlsoAccept = cb(function() {
-            return getParents(module.bundle.root, id);
-        });
-        if (assetsToAlsoAccept && assetsToAccept.length) {
-            assetsToAlsoAccept.forEach(function(a) {
-                hmrDispose(a[0], a[1]);
-            }); // $FlowFixMe[method-unbinding]
-            assetsToAccept.push.apply(assetsToAccept, assetsToAlsoAccept);
-        }
-    });
-}
-
 },{}],"d8Dch":[function(require,module,exports) {
 var $parcel$ReactRefreshHelpers$98a3 = require("@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js");
 var prevRefreshReg = window.$RefreshReg$;
@@ -2966,9 +2983,9 @@ $RefreshReg$(_c, "MyFlixApplication");
 }
 },{"react/jsx-dev-runtime":"iTorj","react-dom/client":"lOjBx","./components/main-view":"6mZ9W","./index.scss":"lJZlQ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"km3Ru"}],"iTorj":[function(require,module,exports) {
 "use strict";
-module.exports = require("2abccaf63a481cc1");
+module.exports = require("ee51401569654d91");
 
-},{"2abccaf63a481cc1":"48uCM"}],"48uCM":[function(require,module,exports) {
+},{"ee51401569654d91":"48uCM"}],"48uCM":[function(require,module,exports) {
 /**
  * @license React
  * react-jsx-dev-runtime.development.js
@@ -2980,7 +2997,7 @@ module.exports = require("2abccaf63a481cc1");
  */ "use strict";
 (function() {
     "use strict";
-    var React = require("976ce7662c17a4e5");
+    var React = require("58362d9d82be395f");
     // ATTENTION
     // When adding new symbols to this file,
     // Please consider also adding to 'react-devtools-shared/src/backend/ReactSymbols'
@@ -3799,11 +3816,11 @@ module.exports = require("2abccaf63a481cc1");
     exports.jsxDEV = jsxDEV$1;
 })();
 
-},{"976ce7662c17a4e5":"21dqq"}],"21dqq":[function(require,module,exports) {
+},{"58362d9d82be395f":"21dqq"}],"21dqq":[function(require,module,exports) {
 "use strict";
-module.exports = require("a77be25c03151494");
+module.exports = require("a569817e6ea559f6");
 
-},{"a77be25c03151494":"6YvXz"}],"6YvXz":[function(require,module,exports) {
+},{"a569817e6ea559f6":"6YvXz"}],"6YvXz":[function(require,module,exports) {
 /**
  * @license React
  * react.development.js
@@ -5671,7 +5688,7 @@ module.exports = require("a77be25c03151494");
 
 },{}],"lOjBx":[function(require,module,exports) {
 "use strict";
-var m = require("ac4ecf98fac60bc5");
+var m = require("aaccff5d309d9239");
 var i = m.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
 exports.createRoot = function(c, o) {
     i.usingClientEntryPoint = true;
@@ -5690,7 +5707,7 @@ exports.hydrateRoot = function(c, h, o) {
     }
 };
 
-},{"ac4ecf98fac60bc5":"j6uA9"}],"j6uA9":[function(require,module,exports) {
+},{"aaccff5d309d9239":"j6uA9"}],"j6uA9":[function(require,module,exports) {
 "use strict";
 function checkDCE() {
     /* global __REACT_DEVTOOLS_GLOBAL_HOOK__ */ if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === "undefined" || typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.checkDCE !== "function") return;
@@ -5704,9 +5721,9 @@ function checkDCE() {
     // a false positive.
     throw new Error("^_^");
 }
-module.exports = require("ad659ce565d3971f");
+module.exports = require("b0f0e6b9e8349dac");
 
-},{"ad659ce565d3971f":"3iA9v"}],"3iA9v":[function(require,module,exports) {
+},{"b0f0e6b9e8349dac":"3iA9v"}],"3iA9v":[function(require,module,exports) {
 /**
  * @license React
  * react-dom.development.js
@@ -5719,8 +5736,8 @@ module.exports = require("ad659ce565d3971f");
 (function() {
     "use strict";
     /* global __REACT_DEVTOOLS_GLOBAL_HOOK__ */ if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart === "function") __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart(new Error());
-    var React = require("ac9e07ae89a55f9f");
-    var Scheduler = require("c855e2feca03bd19");
+    var React = require("6f0162e9ab224cd4");
+    var Scheduler = require("8ad4ca65319d28a7");
     var ReactSharedInternals = React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
     var suppressWarning = false;
     function setSuppressWarning(newSuppressWarning) {
@@ -26691,11 +26708,11 @@ module.exports = require("ad659ce565d3971f");
     /* global __REACT_DEVTOOLS_GLOBAL_HOOK__ */ if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStop === "function") __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStop(new Error());
 })();
 
-},{"ac9e07ae89a55f9f":"21dqq","c855e2feca03bd19":"juvHo"}],"juvHo":[function(require,module,exports) {
+},{"6f0162e9ab224cd4":"21dqq","8ad4ca65319d28a7":"juvHo"}],"juvHo":[function(require,module,exports) {
 "use strict";
-module.exports = require("f5bd5bc1b1efe81c");
+module.exports = require("ef03b89c8fe2794e");
 
-},{"f5bd5bc1b1efe81c":"RqdIf"}],"RqdIf":[function(require,module,exports) {
+},{"ef03b89c8fe2794e":"RqdIf"}],"RqdIf":[function(require,module,exports) {
 /**
  * @license React
  * scheduler.development.js
@@ -27492,7 +27509,7 @@ function getFormSubmissionInfo(target, basename) {
         // solution that is not 100% spec compliant.  For complete support in older
         // browsers, consider using the `formdata-submitter-polyfill` package
         if (!isFormDataSubmitterSupported()) {
-            let { name , type , value  } = target;
+            let { name, type, value } = target;
             if (type === "image") {
                 let prefix = name ? name + "." : "";
                 formData.append(prefix + "x", "0");
@@ -27646,7 +27663,7 @@ const startTransitionImpl = _react[START_TRANSITION];
 /**
  * A `<Router>` for use in web browsers. Provides the cleanest URLs.
  */ function BrowserRouter(_ref) {
-    let { basename , children , future , window: window1  } = _ref;
+    let { basename, children, future, window: window1 } = _ref;
     let historyRef = _react.useRef();
     if (historyRef.current == null) historyRef.current = (0, _router.createBrowserHistory)({
         window: window1,
@@ -27657,7 +27674,7 @@ const startTransitionImpl = _react[START_TRANSITION];
         action: history.action,
         location: history.location
     });
-    let { v7_startTransition  } = future || {};
+    let { v7_startTransition } = future || {};
     let setState = _react.useCallback((newState)=>{
         v7_startTransition && startTransitionImpl ? startTransitionImpl(()=>setStateImpl(newState)) : setStateImpl(newState);
     }, [
@@ -27680,7 +27697,7 @@ const startTransitionImpl = _react[START_TRANSITION];
  * A `<Router>` for use in web browsers. Stores the location in the hash
  * portion of the URL so it is not sent to the server.
  */ function HashRouter(_ref2) {
-    let { basename , children , future , window: window1  } = _ref2;
+    let { basename, children, future, window: window1 } = _ref2;
     let historyRef = _react.useRef();
     if (historyRef.current == null) historyRef.current = (0, _router.createHashHistory)({
         window: window1,
@@ -27691,7 +27708,7 @@ const startTransitionImpl = _react[START_TRANSITION];
         action: history.action,
         location: history.location
     });
-    let { v7_startTransition  } = future || {};
+    let { v7_startTransition } = future || {};
     let setState = _react.useCallback((newState)=>{
         v7_startTransition && startTransitionImpl ? startTransitionImpl(()=>setStateImpl(newState)) : setStateImpl(newState);
     }, [
@@ -27716,12 +27733,12 @@ const startTransitionImpl = _react[START_TRANSITION];
  * two versions of the history library to your bundles unless you use the same
  * version of the history library that React Router uses internally.
  */ function HistoryRouter(_ref3) {
-    let { basename , children , future , history  } = _ref3;
+    let { basename, children, future, history } = _ref3;
     let [state, setStateImpl] = _react.useState({
         action: history.action,
         location: history.location
     });
-    let { v7_startTransition  } = future || {};
+    let { v7_startTransition } = future || {};
     let setState = _react.useCallback((newState)=>{
         v7_startTransition && startTransitionImpl ? startTransitionImpl(()=>setStateImpl(newState)) : setStateImpl(newState);
     }, [
@@ -27746,8 +27763,8 @@ const ABSOLUTE_URL_REGEX = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i;
 /**
  * The public API for rendering a history-aware <a>.
  */ const Link = /*#__PURE__*/ _react.forwardRef(function LinkWithRef(_ref4, ref) {
-    let { onClick , relative , reloadDocument , replace , state , target , to , preventScrollReset  } = _ref4, rest = _objectWithoutPropertiesLoose(_ref4, _excluded);
-    let { basename  } = _react.useContext((0, _reactRouter.UNSAFE_NavigationContext));
+    let { onClick, relative, reloadDocument, replace, state, target, to, preventScrollReset } = _ref4, rest = _objectWithoutPropertiesLoose(_ref4, _excluded);
+    let { basename } = _react.useContext((0, _reactRouter.UNSAFE_NavigationContext));
     // Rendered into <a href> for absolute URLs
     let absoluteHref;
     let isExternal = false;
@@ -27793,13 +27810,13 @@ Link.displayName = "Link";
 /**
  * A <Link> wrapper that knows if it's "active" or not.
  */ const NavLink = /*#__PURE__*/ _react.forwardRef(function NavLinkWithRef(_ref5, ref) {
-    let { "aria-current": ariaCurrentProp = "page" , caseSensitive =false , className: classNameProp = "" , end =false , style: styleProp , to , children  } = _ref5, rest = _objectWithoutPropertiesLoose(_ref5, _excluded2);
+    let { "aria-current": ariaCurrentProp = "page", caseSensitive = false, className: classNameProp = "", end = false, style: styleProp, to, children } = _ref5, rest = _objectWithoutPropertiesLoose(_ref5, _excluded2);
     let path = (0, _reactRouter.useResolvedPath)(to, {
         relative: rest.relative
     });
     let location = (0, _reactRouter.useLocation)();
     let routerState = _react.useContext((0, _reactRouter.UNSAFE_DataRouterStateContext));
-    let { navigator  } = _react.useContext((0, _reactRouter.UNSAFE_NavigationContext));
+    let { navigator } = _react.useContext((0, _reactRouter.UNSAFE_NavigationContext));
     let toPathname = navigator.encodeLocation ? navigator.encodeLocation(path).pathname : path.pathname;
     let locationPathname = location.pathname;
     let nextLocationPathname = routerState && routerState.navigation && routerState.navigation.location ? routerState.navigation.location.pathname : null;
@@ -27856,7 +27873,7 @@ NavLink.displayName = "NavLink";
 });
 Form.displayName = "Form";
 const FormImpl = /*#__PURE__*/ _react.forwardRef((_ref6, forwardedRef)=>{
-    let { reloadDocument , replace , state , method =defaultMethod , action , onSubmit , submit , relative , preventScrollReset  } = _ref6, props = _objectWithoutPropertiesLoose(_ref6, _excluded3);
+    let { reloadDocument, replace, state, method = defaultMethod, action, onSubmit, submit, relative, preventScrollReset } = _ref6, props = _objectWithoutPropertiesLoose(_ref6, _excluded3);
     let formMethod = method.toLowerCase() === "get" ? "get" : "post";
     let formAction = useFormAction(action, {
         relative
@@ -27887,7 +27904,7 @@ FormImpl.displayName = "FormImpl";
  * This component will emulate the browser's scroll restoration on location
  * changes.
  */ function ScrollRestoration(_ref7) {
-    let { getKey , storageKey  } = _ref7;
+    let { getKey, storageKey } = _ref7;
     useScrollRestoration({
         getKey,
         storageKey
@@ -27929,7 +27946,7 @@ function useDataRouterState(hookName) {
  * you need to create custom `<Link>` components with the same click behavior we
  * use in our exported `<Link>`.
  */ function useLinkClickHandler(to, _temp) {
-    let { target , replace: replaceProp , state , preventScrollReset , relative  } = _temp === void 0 ? {} : _temp;
+    let { target, replace: replaceProp, state, preventScrollReset, relative } = _temp === void 0 ? {} : _temp;
     let navigate = (0, _reactRouter.useNavigate)();
     let location = (0, _reactRouter.useLocation)();
     let path = (0, _reactRouter.useResolvedPath)(to, {
@@ -27995,13 +28012,13 @@ function validateClientSideSubmission() {
  * Returns a function that may be used to programmatically submit a form (or
  * some arbitrary data) to the server.
  */ function useSubmit() {
-    let { router  } = useDataRouterContext(DataRouterHook.UseSubmit);
-    let { basename  } = _react.useContext((0, _reactRouter.UNSAFE_NavigationContext));
+    let { router } = useDataRouterContext(DataRouterHook.UseSubmit);
+    let { basename } = _react.useContext((0, _reactRouter.UNSAFE_NavigationContext));
     let currentRouteId = (0, _reactRouter.UNSAFE_useRouteId)();
     return _react.useCallback(function(target, options) {
         if (options === void 0) options = {};
         validateClientSideSubmission();
-        let { action , method , encType , formData , body  } = getFormSubmissionInfo(target, basename);
+        let { action, method, encType, formData, body } = getFormSubmissionInfo(target, basename);
         router.navigate(options.action || action, {
             preventScrollReset: options.preventScrollReset,
             formData,
@@ -28021,12 +28038,12 @@ function validateClientSideSubmission() {
 /**
  * Returns the implementation for fetcher.submit
  */ function useSubmitFetcher(fetcherKey, fetcherRouteId) {
-    let { router  } = useDataRouterContext(DataRouterHook.UseSubmitFetcher);
-    let { basename  } = _react.useContext((0, _reactRouter.UNSAFE_NavigationContext));
+    let { router } = useDataRouterContext(DataRouterHook.UseSubmitFetcher);
+    let { basename } = _react.useContext((0, _reactRouter.UNSAFE_NavigationContext));
     return _react.useCallback(function(target, options) {
         if (options === void 0) options = {};
         validateClientSideSubmission();
-        let { action , method , encType , formData , body  } = getFormSubmissionInfo(target, basename);
+        let { action, method, encType, formData, body } = getFormSubmissionInfo(target, basename);
         !(fetcherRouteId != null) && (0, _router.UNSAFE_invariant)(false, "No routeId available for useFetcher()");
         router.fetch(fetcherKey, fetcherRouteId, options.action || action, {
             preventScrollReset: options.preventScrollReset,
@@ -28045,8 +28062,8 @@ function validateClientSideSubmission() {
 // v7: Eventually we should deprecate this entirely in favor of using the
 // router method directly?
 function useFormAction(action, _temp2) {
-    let { relative  } = _temp2 === void 0 ? {} : _temp2;
-    let { basename  } = _react.useContext((0, _reactRouter.UNSAFE_NavigationContext));
+    let { relative } = _temp2 === void 0 ? {} : _temp2;
+    let { basename } = _react.useContext((0, _reactRouter.UNSAFE_NavigationContext));
     let routeContext = _react.useContext((0, _reactRouter.UNSAFE_RouteContext));
     !routeContext && (0, _router.UNSAFE_invariant)(false, "useFormAction must be used inside a RouteContext");
     let [match] = routeContext.matches.slice(-1);
@@ -28104,7 +28121,7 @@ let fetcherId = 0;
  * for any interaction that stays on the same page.
  */ function useFetcher() {
     var _route$matches;
-    let { router  } = useDataRouterContext(DataRouterHook.UseFetcher);
+    let { router } = useDataRouterContext(DataRouterHook.UseFetcher);
     let route = _react.useContext((0, _reactRouter.UNSAFE_RouteContext));
     !route && (0, _router.UNSAFE_invariant)(false, "useFetcher must be used inside a RouteContext");
     let routeId = (_route$matches = route.matches[route.matches.length - 1]) == null ? void 0 : _route$matches.route.id;
@@ -28162,10 +28179,10 @@ let savedScrollPositions = {};
 /**
  * When rendered inside a RouterProvider, will restore scroll positions on navigations
  */ function useScrollRestoration(_temp3) {
-    let { getKey , storageKey  } = _temp3 === void 0 ? {} : _temp3;
-    let { router  } = useDataRouterContext(DataRouterHook.UseScrollRestoration);
-    let { restoreScrollPosition , preventScrollReset  } = useDataRouterState(DataRouterStateHook.UseScrollRestoration);
-    let { basename  } = _react.useContext((0, _reactRouter.UNSAFE_NavigationContext));
+    let { getKey, storageKey } = _temp3 === void 0 ? {} : _temp3;
+    let { router } = useDataRouterContext(DataRouterHook.UseScrollRestoration);
+    let { restoreScrollPosition, preventScrollReset } = useDataRouterState(DataRouterStateHook.UseScrollRestoration);
+    let { basename } = _react.useContext((0, _reactRouter.UNSAFE_NavigationContext));
     let location = (0, _reactRouter.useLocation)();
     let matches = (0, _reactRouter.useMatches)();
     let navigation = (0, _reactRouter.useNavigation)();
@@ -28254,7 +28271,7 @@ let savedScrollPositions = {};
  * Note: The `callback` argument should be a function created with
  * `React.useCallback()`.
  */ function useBeforeUnload(callback, options) {
-    let { capture  } = options || {};
+    let { capture } = options || {};
     _react.useEffect(()=>{
         let opts = capture != null ? {
             capture
@@ -28276,7 +28293,7 @@ let savedScrollPositions = {};
  * Note: The `callback` argument should be a function created with
  * `React.useCallback()`.
  */ function usePageHide(callback, options) {
-    let { capture  } = options || {};
+    let { capture } = options || {};
     _react.useEffect(()=>{
         let opts = capture != null ? {
             capture
@@ -28298,7 +28315,7 @@ let savedScrollPositions = {};
  * very incorrectly in some cases) across browsers if user click addition
  * back/forward navigations while the confirm is open.  Use at your own risk.
  */ function usePrompt(_ref8) {
-    let { when , message  } = _ref8;
+    let { when, message } = _ref8;
     let blocker = (0, _reactRouter.unstable_useBlocker)(when);
     _react.useEffect(()=>{
         if (blocker.state === "blocked" && !when) blocker.reset();
@@ -28429,11 +28446,11 @@ RouteErrorContext.displayName = "RouteError";
  *
  * @see https://reactrouter.com/hooks/use-href
  */ function useHref(to, _temp) {
-    let { relative  } = _temp === void 0 ? {} : _temp;
+    let { relative } = _temp === void 0 ? {} : _temp;
     !useInRouterContext() && (0, _router.UNSAFE_invariant)(false, // router loaded. We can help them understand how to avoid that.
     "useHref() may be used only in the context of a <Router> component.");
-    let { basename , navigator  } = _react.useContext(NavigationContext);
-    let { hash , pathname , search  } = useResolvedPath(to, {
+    let { basename, navigator } = _react.useContext(NavigationContext);
+    let { hash, pathname, search } = useResolvedPath(to, {
         relative
     });
     let joinedPathname = pathname;
@@ -28489,7 +28506,7 @@ RouteErrorContext.displayName = "RouteError";
  */ function useMatch(pattern) {
     !useInRouterContext() && (0, _router.UNSAFE_invariant)(false, // router loaded. We can help them understand how to avoid that.
     "useMatch() may be used only in the context of a <Router> component.");
-    let { pathname  } = useLocation();
+    let { pathname } = useLocation();
     return _react.useMemo(()=>(0, _router.matchPath)(pattern, pathname), [
         pathname,
         pattern
@@ -28512,7 +28529,7 @@ function useIsomorphicLayoutEffect(cb) {
  *
  * @see https://reactrouter.com/hooks/use-navigate
  */ function useNavigate() {
-    let { isDataRoute  } = _react.useContext(RouteContext);
+    let { isDataRoute } = _react.useContext(RouteContext);
     // Conditional usage is OK here because the usage of a data router is static
     // eslint-disable-next-line react-hooks/rules-of-hooks
     return isDataRoute ? useNavigateStable() : useNavigateUnstable();
@@ -28521,9 +28538,9 @@ function useNavigateUnstable() {
     !useInRouterContext() && (0, _router.UNSAFE_invariant)(false, // router loaded. We can help them understand how to avoid that.
     "useNavigate() may be used only in the context of a <Router> component.");
     let dataRouterContext = _react.useContext(DataRouterContext);
-    let { basename , navigator  } = _react.useContext(NavigationContext);
-    let { matches  } = _react.useContext(RouteContext);
-    let { pathname: locationPathname  } = useLocation();
+    let { basename, navigator } = _react.useContext(NavigationContext);
+    let { matches } = _react.useContext(RouteContext);
+    let { pathname: locationPathname } = useLocation();
     let routePathnamesJson = JSON.stringify((0, _router.UNSAFE_getPathContributingMatches)(matches).map((match)=>match.pathnameBase));
     let activeRef = _react.useRef(false);
     useIsomorphicLayoutEffect(()=>{
@@ -28586,7 +28603,7 @@ const OutletContext = /*#__PURE__*/ _react.createContext(null);
  *
  * @see https://reactrouter.com/hooks/use-params
  */ function useParams() {
-    let { matches  } = _react.useContext(RouteContext);
+    let { matches } = _react.useContext(RouteContext);
     let routeMatch = matches[matches.length - 1];
     return routeMatch ? routeMatch.params : {};
 }
@@ -28595,9 +28612,9 @@ const OutletContext = /*#__PURE__*/ _react.createContext(null);
  *
  * @see https://reactrouter.com/hooks/use-resolved-path
  */ function useResolvedPath(to, _temp2) {
-    let { relative  } = _temp2 === void 0 ? {} : _temp2;
-    let { matches  } = _react.useContext(RouteContext);
-    let { pathname: locationPathname  } = useLocation();
+    let { relative } = _temp2 === void 0 ? {} : _temp2;
+    let { matches } = _react.useContext(RouteContext);
+    let { pathname: locationPathname } = useLocation();
     let routePathnamesJson = JSON.stringify((0, _router.UNSAFE_getPathContributingMatches)(matches).map((match)=>match.pathnameBase));
     return _react.useMemo(()=>(0, _router.resolveTo)(to, JSON.parse(routePathnamesJson), locationPathname, relative === "path"), [
         to,
@@ -28620,8 +28637,8 @@ const OutletContext = /*#__PURE__*/ _react.createContext(null);
 function useRoutesImpl(routes, locationArg, dataRouterState) {
     !useInRouterContext() && (0, _router.UNSAFE_invariant)(false, // router loaded. We can help them understand how to avoid that.
     "useRoutes() may be used only in the context of a <Router> component.");
-    let { navigator  } = _react.useContext(NavigationContext);
-    let { matches: parentMatches  } = _react.useContext(RouteContext);
+    let { navigator } = _react.useContext(NavigationContext);
+    let { matches: parentMatches } = _react.useContext(RouteContext);
     let routeMatch = parentMatches[parentMatches.length - 1];
     let parentParams = routeMatch ? routeMatch.params : {};
     let parentPathname = routeMatch ? routeMatch.pathname : "/";
@@ -28776,7 +28793,7 @@ class RenderErrorBoundary extends _react.Component {
     }
 }
 function RenderedRoute(_ref) {
-    let { routeContext , match , children  } = _ref;
+    let { routeContext, match, children } = _ref;
     let dataRouterContext = _react.useContext(DataRouterContext);
     // Track how deep we got in our render pass to emulate SSR componentDidCatch
     // in a DataStaticRouter
@@ -28920,9 +28937,9 @@ function useCurrentRouteId(hookName) {
  * Returns the active route matches, useful for accessing loaderData for
  * parent/child routes or the route "handle" property
  */ function useMatches() {
-    let { matches , loaderData  } = useDataRouterState(DataRouterStateHook.UseMatches);
+    let { matches, loaderData } = useDataRouterState(DataRouterStateHook.UseMatches);
     return _react.useMemo(()=>matches.map((match)=>{
-            let { pathname , params  } = match;
+            let { pathname, params } = match;
             // Note: This structure matches that created by createUseMatchesMatch
             // in the @remix-run/router , so if you change this please also change
             // that :)  Eventually we'll DRY this up
@@ -28997,7 +29014,7 @@ let blockerId = 0;
  * using half-filled form data.  This does not handle hard-reloads or
  * cross-origin navigations.
  */ function useBlocker(shouldBlock) {
-    let { router , basename  } = useDataRouterContext(DataRouterHook.UseBlocker);
+    let { router, basename } = useDataRouterContext(DataRouterHook.UseBlocker);
     let state = useDataRouterState(DataRouterStateHook.UseBlocker);
     let [blockerKey, setBlockerKey] = _react.useState("");
     let blockerFunction = _react.useCallback((arg)=>{
@@ -29006,7 +29023,7 @@ let blockerId = 0;
         // If they provided us a function and we've got an active basename, strip
         // it from the locations we expose to the user to match the behavior of
         // useLocation
-        let { currentLocation , nextLocation , historyAction  } = arg;
+        let { currentLocation, nextLocation, historyAction } = arg;
         return shouldBlock({
             currentLocation: _extends({}, currentLocation, {
                 pathname: (0, _router.stripBasename)(currentLocation.pathname, basename) || currentLocation.pathname
@@ -29048,7 +29065,7 @@ let blockerId = 0;
  * Stable version of useNavigate that is used when we are in the context of
  * a RouterProvider.
  */ function useNavigateStable() {
-    let { router  } = useDataRouterContext(DataRouterHook.UseNavigateStable);
+    let { router } = useDataRouterContext(DataRouterHook.UseNavigateStable);
     let id = useCurrentRouteId(DataRouterStateHook.UseNavigateStable);
     let activeRef = _react.useRef(false);
     useIsomorphicLayoutEffect(()=>{
@@ -29102,11 +29119,11 @@ const startTransitionImpl = _react[START_TRANSITION];
 /**
  * Given a Remix Router instance, render the appropriate UI
  */ function RouterProvider(_ref) {
-    let { fallbackElement , router , future  } = _ref;
+    let { fallbackElement, router, future } = _ref;
     // Need to use a layout effect here so we are subscribed early enough to
     // pick up on any render-driven redirects/navigations (useEffect/<Navigate>)
     let [state, setStateImpl] = _react.useState(router.state);
-    let { v7_startTransition  } = future || {};
+    let { v7_startTransition } = future || {};
     let setState = _react.useCallback((newState)=>{
         v7_startTransition && startTransitionImpl ? startTransitionImpl(()=>setStateImpl(newState)) : setStateImpl(newState);
     }, [
@@ -29167,7 +29184,7 @@ const startTransitionImpl = _react[START_TRANSITION];
     }) : fallbackElement))), null);
 }
 function DataRoutes(_ref2) {
-    let { routes , state  } = _ref2;
+    let { routes, state } = _ref2;
     return useRoutesImpl(routes, undefined, state);
 }
 /**
@@ -29175,7 +29192,7 @@ function DataRoutes(_ref2) {
  *
  * @see https://reactrouter.com/router-components/memory-router
  */ function MemoryRouter(_ref3) {
-    let { basename , children , initialEntries , initialIndex , future  } = _ref3;
+    let { basename, children, initialEntries, initialIndex, future } = _ref3;
     let historyRef = _react.useRef();
     if (historyRef.current == null) historyRef.current = (0, _router.createMemoryHistory)({
         initialEntries,
@@ -29187,7 +29204,7 @@ function DataRoutes(_ref2) {
         action: history.action,
         location: history.location
     });
-    let { v7_startTransition  } = future || {};
+    let { v7_startTransition } = future || {};
     let setState = _react.useCallback((newState)=>{
         v7_startTransition && startTransitionImpl ? startTransitionImpl(()=>setStateImpl(newState)) : setStateImpl(newState);
     }, [
@@ -29215,12 +29232,12 @@ function DataRoutes(_ref2) {
  *
  * @see https://reactrouter.com/components/navigate
  */ function Navigate(_ref4) {
-    let { to , replace , state , relative  } = _ref4;
+    let { to, replace, state, relative } = _ref4;
     !useInRouterContext() && (0, _router.UNSAFE_invariant)(false, // the router loaded. We can help them understand how to avoid that.
     "<Navigate> may be used only in the context of a <Router> component.");
     (0, _router.UNSAFE_warning)(!_react.useContext(NavigationContext).static, "<Navigate> must not be used on the initial render in a <StaticRouter>. This is a no-op, but you should modify your code so the <Navigate> is only ever rendered in response to some user interaction or state change.");
-    let { matches  } = _react.useContext(RouteContext);
-    let { pathname: locationPathname  } = useLocation();
+    let { matches } = _react.useContext(RouteContext);
+    let { pathname: locationPathname } = useLocation();
     let navigate = useNavigate();
     // Resolve the path outside of the effect so that when effects run twice in
     // StrictMode they navigate to the same place
@@ -29262,7 +29279,7 @@ function DataRoutes(_ref2) {
  *
  * @see https://reactrouter.com/router-components/router
  */ function Router(_ref5) {
-    let { basename: basenameProp = "/" , children =null , location: locationProp , navigationType =(0, _router.Action).Pop , navigator , static: staticProp = false  } = _ref5;
+    let { basename: basenameProp = "/", children = null, location: locationProp, navigationType = (0, _router.Action).Pop, navigator, static: staticProp = false } = _ref5;
     !!useInRouterContext() && (0, _router.UNSAFE_invariant)(false, "You cannot render a <Router> inside another <Router>. You should never have more than one in your app.");
     // Preserve trailing slashes on basename, so we can let the user control
     // the enforcement of trailing slashes throughout the app
@@ -29277,7 +29294,7 @@ function DataRoutes(_ref2) {
         staticProp
     ]);
     if (typeof locationProp === "string") locationProp = (0, _router.parsePath)(locationProp);
-    let { pathname ="/" , search ="" , hash ="" , state =null , key ="default"  } = locationProp;
+    let { pathname = "/", search = "", hash = "", state = null, key = "default" } = locationProp;
     let locationContext = _react.useMemo(()=>{
         let trailingPathname = (0, _router.stripBasename)(pathname, basename);
         if (trailingPathname == null) return null;
@@ -29315,14 +29332,14 @@ function DataRoutes(_ref2) {
  *
  * @see https://reactrouter.com/components/routes
  */ function Routes(_ref6) {
-    let { children , location  } = _ref6;
+    let { children, location } = _ref6;
     return useRoutes(createRoutesFromChildren(children), location);
 }
 /**
  * Component to use for rendering lazily loaded data from returning defer()
  * in a loader function
  */ function Await(_ref7) {
-    let { children , errorElement , resolve  } = _ref7;
+    let { children, errorElement, resolve } = _ref7;
     return /*#__PURE__*/ _react.createElement(AwaitErrorBoundary, {
         resolve: resolve,
         errorElement: errorElement
@@ -29351,7 +29368,7 @@ class AwaitErrorBoundary extends _react.Component {
         console.error("<Await> caught the following error during render", error, errorInfo);
     }
     render() {
-        let { children , errorElement , resolve  } = this.props;
+        let { children, errorElement, resolve } = this.props;
         let promise = null;
         let status = AwaitRenderStatus.pending;
         if (!(resolve instanceof Promise)) {
@@ -29413,7 +29430,7 @@ class AwaitErrorBoundary extends _react.Component {
  * @private
  * Indirection to leverage useAsyncValue for a render-prop API on <Await>
  */ function ResolveAwait(_ref8) {
-    let { children  } = _ref8;
+    let { children } = _ref8;
     let data = useAsyncValue();
     let toRender = typeof children === "function" ? children(data) : children;
     return /*#__PURE__*/ _react.createElement(_react.Fragment, null, toRender);
@@ -29596,9 +29613,9 @@ const PopStateEventType = "popstate";
  * in stateful non-browser environments like tests and React Native.
  */ function createMemoryHistory(options) {
     if (options === void 0) options = {};
-    let { initialEntries =[
+    let { initialEntries = [
         "/"
-    ] , initialIndex , v5Compat =false  } = options;
+    ], initialIndex, v5Compat = false } = options;
     let entries; // Declare so we can access from createMemoryLocation
     entries = initialEntries.map((entry, index)=>createMemoryLocation(entry, typeof entry === "string" ? null : entry.state, index === 0 ? "default" : undefined));
     let index = clampIndex(initialIndex == null ? entries.length - 1 : initialIndex);
@@ -29691,7 +29708,7 @@ const PopStateEventType = "popstate";
  */ function createBrowserHistory(options) {
     if (options === void 0) options = {};
     function createBrowserLocation(window1, globalHistory) {
-        let { pathname , search , hash  } = window1.location;
+        let { pathname, search, hash } = window1.location;
         return createLocation("", {
             pathname,
             search,
@@ -29714,7 +29731,7 @@ const PopStateEventType = "popstate";
  */ function createHashHistory(options) {
     if (options === void 0) options = {};
     function createHashLocation(window1, globalHistory) {
-        let { pathname ="/" , search ="" , hash =""  } = parsePath(window1.location.hash.substr(1));
+        let { pathname = "/", search = "", hash = "" } = parsePath(window1.location.hash.substr(1));
         return createLocation("", {
             pathname,
             search,
@@ -29788,7 +29805,7 @@ function createKey() {
 /**
  * Creates a string URL path from the given pathname, search, and hash components.
  */ function createPath(_ref) {
-    let { pathname ="/" , search ="" , hash =""  } = _ref;
+    let { pathname = "/", search = "", hash = "" } = _ref;
     if (search && search !== "?") pathname += search.charAt(0) === "?" ? search : "?" + search;
     if (hash && hash !== "#") pathname += hash.charAt(0) === "#" ? hash : "#" + hash;
     return pathname;
@@ -29814,7 +29831,7 @@ function createKey() {
 }
 function getUrlBasedHistory(getLocation, createHref, validateLocation, options) {
     if (options === void 0) options = {};
-    let { window: window1 = document.defaultView , v5Compat =false  } = options;
+    let { window: window1 = document.defaultView, v5Compat = false } = options;
     let globalHistory = window1.history;
     let action = Action.Pop;
     let listener = null;
@@ -30123,7 +30140,7 @@ function compareIndexes(a, b) {
     0;
 }
 function matchRouteBranch(branch, pathname) {
-    let { routesMeta  } = branch;
+    let { routesMeta } = branch;
     let matchedParams = {};
     let matchedPathname = "/";
     let matches = [];
@@ -30295,7 +30312,7 @@ function safelyDecodeURIComponent(value, paramName) {
  * @see https://reactrouter.com/utils/resolve-path
  */ function resolvePath(to, fromPathname) {
     if (fromPathname === void 0) fromPathname = "/";
-    let { pathname: toPathname , search ="" , hash =""  } = typeof to === "string" ? parsePath(to) : to;
+    let { pathname: toPathname, search = "", hash = "" } = typeof to === "string" ? parsePath(to) : to;
     let pathname = toPathname ? toPathname.startsWith("/") ? toPathname : resolvePathname(toPathname, fromPathname) : fromPathname;
     return {
         pathname,
@@ -30705,7 +30722,7 @@ const defaultMapRouteProperties = (route)=>({
         let error = getInternalRouterError(404, {
             pathname: init.history.location.pathname
         });
-        let { matches , route  } = getShortCircuitMatches(dataRoutes);
+        let { matches, route } = getShortCircuitMatches(dataRoutes);
         initialMatches = matches;
         initialErrors = {
             [route.id]: error
@@ -30786,7 +30803,7 @@ const defaultMapRouteProperties = (route)=>({
         // If history informs us of a POP navigation, start the navigation but do not update
         // state.  We'll update our own state once the navigation completes
         unlistenHistory = init.history.listen((_ref)=>{
-            let { action: historyAction , location , delta  } = _ref;
+            let { action: historyAction, location, delta } = _ref;
             // Ignore this event if it was just us resetting the URL from a
             // blocked POP navigation
             if (ignoreNextHistoryUpdate) {
@@ -30925,7 +30942,7 @@ const defaultMapRouteProperties = (route)=>({
             return;
         }
         let normalizedPath = normalizeTo(state.location, state.matches, basename, future.v7_prependBasename, to, opts == null ? void 0 : opts.fromRouteId, opts == null ? void 0 : opts.relative);
-        let { path , submission , error  } = normalizeNavigateOptions(future.v7_normalizeFormMethod, false, normalizedPath, opts);
+        let { path, submission, error } = normalizeNavigateOptions(future.v7_normalizeFormMethod, false, normalizedPath, opts);
         let currentLocation = state.location;
         let nextLocation = createLocation(state.location, path, opts && opts.state);
         // When using navigate as a PUSH/REPLACE we aren't reading an already-encoded
@@ -31033,7 +31050,7 @@ const defaultMapRouteProperties = (route)=>({
             let error = getInternalRouterError(404, {
                 pathname: location.pathname
             });
-            let { matches: notFoundMatches , route  } = getShortCircuitMatches(routesToUse);
+            let { matches: notFoundMatches, route } = getShortCircuitMatches(routesToUse);
             // Cancel all pending deferred on 404s since we don't keep any routes
             cancelActiveDeferreds();
             completeNavigation(location, {
@@ -31084,7 +31101,7 @@ const defaultMapRouteProperties = (route)=>({
             });
         }
         // Call loaders
-        let { shortCircuited , loaderData , errors  } = await handleLoaders(request, location, matches, loadingNavigation, opts && opts.submission, opts && opts.fetcherSubmission, opts && opts.replace, pendingActionData, pendingError);
+        let { shortCircuited, loaderData, errors } = await handleLoaders(request, location, matches, loadingNavigation, opts && opts.submission, opts && opts.fetcherSubmission, opts && opts.replace, pendingActionData, pendingError);
         if (shortCircuited) return;
         // Clean up now that the action/loaders have completed.  Don't clean up if
         // we short circuited because pendingNavigationController will have already
@@ -31230,7 +31247,7 @@ const defaultMapRouteProperties = (route)=>({
         // Proxy navigation abort through to revalidation fetchers
         let abortPendingFetchRevalidations = ()=>revalidatingFetchers.forEach((f)=>abortFetcher(f.key));
         if (pendingNavigationController) pendingNavigationController.signal.addEventListener("abort", abortPendingFetchRevalidations);
-        let { results , loaderResults , fetcherResults  } = await callLoadersAndMaybeResolveData(state.matches, matches, matchesToLoad, revalidatingFetchers, request);
+        let { results, loaderResults, fetcherResults } = await callLoadersAndMaybeResolveData(state.matches, matches, matchesToLoad, revalidatingFetchers, request);
         if (request.signal.aborted) return {
             shortCircuited: true
         };
@@ -31257,7 +31274,7 @@ const defaultMapRouteProperties = (route)=>({
             };
         }
         // Process and commit output from loaders
-        let { loaderData , errors  } = processLoaderData(state, matches, matchesToLoad, loaderResults, pendingError, revalidatingFetchers, fetcherResults, activeDeferreds);
+        let { loaderData, errors } = processLoaderData(state, matches, matchesToLoad, loaderResults, pendingError, revalidatingFetchers, fetcherResults, activeDeferreds);
         // Wire up subscribers to update loaderData as promises settle
         activeDeferreds.forEach((deferredData, routeId)=>{
             deferredData.subscribe((aborted)=>{
@@ -31293,7 +31310,7 @@ const defaultMapRouteProperties = (route)=>({
             }));
             return;
         }
-        let { path , submission , error  } = normalizeNavigateOptions(future.v7_normalizeFormMethod, true, normalizedPath, opts);
+        let { path, submission, error } = normalizeNavigateOptions(future.v7_normalizeFormMethod, true, normalizedPath, opts);
         if (error) {
             setFetcherError(key, routeId, error);
             return;
@@ -31410,7 +31427,7 @@ const defaultMapRouteProperties = (route)=>({
         });
         let abortPendingFetchRevalidations = ()=>revalidatingFetchers.forEach((rf)=>abortFetcher(rf.key));
         abortController.signal.addEventListener("abort", abortPendingFetchRevalidations);
-        let { results , loaderResults , fetcherResults  } = await callLoadersAndMaybeResolveData(state.matches, matches, matchesToLoad, revalidatingFetchers, revalidationRequest);
+        let { results, loaderResults, fetcherResults } = await callLoadersAndMaybeResolveData(state.matches, matches, matchesToLoad, revalidatingFetchers, revalidationRequest);
         if (abortController.signal.aborted) return;
         abortController.signal.removeEventListener("abort", abortPendingFetchRevalidations);
         fetchReloadIds.delete(key);
@@ -31428,7 +31445,7 @@ const defaultMapRouteProperties = (route)=>({
             return startRedirectNavigation(state, redirect.result);
         }
         // Process and commit output from loaders
-        let { loaderData , errors  } = processLoaderData(state, state.matches, matchesToLoad, loaderResults, undefined, revalidatingFetchers, fetcherResults, activeDeferreds);
+        let { loaderData, errors } = processLoaderData(state, state.matches, matchesToLoad, loaderResults, undefined, revalidatingFetchers, fetcherResults, activeDeferreds);
         // Since we let revalidations complete even if the submitting fetcher was
         // deleted, only put it back to idle if it hasn't been deleted
         if (state.fetchers.has(key)) {
@@ -31544,7 +31561,7 @@ const defaultMapRouteProperties = (route)=>({
    * actually touch history until we've processed redirects, so we just use
    * the history action from the original navigation (PUSH or REPLACE).
    */ async function startRedirectNavigation(state, redirect, _temp) {
-        let { submission , replace , isFetchActionRedirect  } = _temp === void 0 ? {} : _temp;
+        let { submission, replace, isFetchActionRedirect } = _temp === void 0 ? {} : _temp;
         if (redirect.revalidate) isRevalidationRequired = true;
         let redirectLocation = createLocation(state.location, redirect.location, _extends({
             _isRedirect: true
@@ -31727,7 +31744,7 @@ const defaultMapRouteProperties = (route)=>({
         });
     }
     function shouldBlockNavigation(_ref2) {
-        let { currentLocation , nextLocation , historyAction  } = _ref2;
+        let { currentLocation, nextLocation, historyAction } = _ref2;
         if (blockerFunctions.size === 0) return;
         // We ony support a single active blocker at the moment since we don't have
         // any compelling use cases for multi-blocker yet
@@ -31878,7 +31895,7 @@ function createStaticHandler(routes, opts) {
    * propagate that out and return the raw Response so the HTTP server can
    * return it directly.
    */ async function query(request, _temp2) {
-        let { requestContext  } = _temp2 === void 0 ? {} : _temp2;
+        let { requestContext } = _temp2 === void 0 ? {} : _temp2;
         let url = new URL(request.url);
         let method = request.method;
         let location = createLocation("", createPath(url), null, "default");
@@ -31888,7 +31905,7 @@ function createStaticHandler(routes, opts) {
             let error = getInternalRouterError(405, {
                 method
             });
-            let { matches: methodNotAllowedMatches , route  } = getShortCircuitMatches(dataRoutes);
+            let { matches: methodNotAllowedMatches, route } = getShortCircuitMatches(dataRoutes);
             return {
                 basename,
                 location,
@@ -31907,7 +31924,7 @@ function createStaticHandler(routes, opts) {
             let error = getInternalRouterError(404, {
                 pathname: location.pathname
             });
-            let { matches: notFoundMatches , route  } = getShortCircuitMatches(dataRoutes);
+            let { matches: notFoundMatches, route } = getShortCircuitMatches(dataRoutes);
             return {
                 basename,
                 location,
@@ -31953,7 +31970,7 @@ function createStaticHandler(routes, opts) {
    * code.  Examples here are 404 and 405 errors that occur prior to reaching
    * any user-defined loaders.
    */ async function queryRoute(request, _temp3) {
-        let { routeId , requestContext  } = _temp3 === void 0 ? {} : _temp3;
+        let { routeId, requestContext } = _temp3 === void 0 ? {} : _temp3;
         let url = new URL(request.url);
         let method = request.method;
         let location = createLocation("", createPath(url), null, "default");
@@ -32658,7 +32675,7 @@ function createClientSideRequest(history, location, signal, submission) {
         signal
     };
     if (submission && isMutationMethod(submission.formMethod)) {
-        let { formMethod , formEncType  } = submission;
+        let { formMethod, formEncType } = submission;
         // Didn't think we needed this but it turns out unlike other methods, patch
         // won't be properly normalized to uppercase and results in a 405 error.
         // See: https://fetch.spec.whatwg.org/#concept-method
@@ -32749,10 +32766,10 @@ function processRouteLoaderData(matches, matchesToLoad, results, pendingError, a
     };
 }
 function processLoaderData(state, matches, matchesToLoad, results, pendingError, revalidatingFetchers, fetcherResults, activeDeferreds) {
-    let { loaderData , errors  } = processRouteLoaderData(matches, matchesToLoad, results, pendingError, activeDeferreds);
+    let { loaderData, errors } = processRouteLoaderData(matches, matchesToLoad, results, pendingError, activeDeferreds);
     // Process results from our revalidating fetchers
     for(let index = 0; index < revalidatingFetchers.length; index++){
-        let { key , match , controller  } = revalidatingFetchers[index];
+        let { key, match, controller } = revalidatingFetchers[index];
         invariant(fetcherResults !== undefined && fetcherResults[index] !== undefined, "Did not find corresponding fetcher result");
         let result = fetcherResults[index];
         // Process fetcher non-redirect errors
@@ -32819,7 +32836,7 @@ function getShortCircuitMatches(routes) {
     };
 }
 function getInternalRouterError(status, _temp4) {
-    let { pathname , routeId , method , type  } = _temp4 === void 0 ? {} : _temp4;
+    let { pathname, routeId, method, type } = _temp4 === void 0 ? {} : _temp4;
     let statusText = "Unknown Server Error";
     let errorMessage = "Unknown @remix-run/router error";
     if (status === 400) {
@@ -32948,7 +32965,7 @@ function hasNakedIndexQuery(search) {
 // Note: This should match the format exported by useMatches, so if you change
 // this please also change that :)  Eventually we'll DRY this up
 function createUseMatchesMatch(match, loaderData) {
-    let { route , pathname , params  } = match;
+    let { route, pathname, params } = match;
     return {
         id: route.id,
         pathname,
@@ -32967,7 +32984,7 @@ function getTargetMatch(matches, location) {
     return pathMatches[pathMatches.length - 1];
 }
 function getSubmissionFromNavigation(navigation) {
-    let { formMethod , formAction , formEncType , text , formData , json  } = navigation;
+    let { formMethod, formAction, formEncType, text, formData, json } = navigation;
     if (!formMethod || !formAction || !formEncType) return;
     if (text != null) return {
         formMethod,
@@ -33124,7 +33141,7 @@ exports.export = function(dest, destName, get) {
 
 },{}],"km3Ru":[function(require,module,exports) {
 "use strict";
-var Refresh = require("d2bd7fbc69ac29bf");
+var Refresh = require("7422ead32dcc1e6b");
 function debounce(func, delay) {
     {
         let timeout = undefined;
@@ -33151,7 +33168,8 @@ function debounce(func, delay) {
 }
 var enqueueUpdate = debounce(function() {
     Refresh.performReactRefresh();
-}, 30); // Everthing below is either adapted or copied from
+}, 30);
+// Everthing below is either adapted or copied from
 // https://github.com/facebook/metro/blob/61de16bd1edd7e738dd0311c89555a644023ab2d/packages/metro/src/lib/polyfills/require.js
 // MIT License - Copyright (c) Facebook, Inc. and its affiliates.
 module.exports.prelude = function(module1) {
@@ -33170,9 +33188,11 @@ module.exports.postlude = function(module1) {
             });
             module1.hot.accept(function(getParents) {
                 var prevExports = module1.hot.data.prevExports;
-                var nextExports = module1.exports; // Since we just executed the code for it, it's possible
+                var nextExports = module1.exports;
+                // Since we just executed the code for it, it's possible
                 // that the new exports make it ineligible for being a boundary.
-                var isNoLongerABoundary = !isReactRefreshBoundary(nextExports); // It can also become ineligible if its exports are incompatible
+                var isNoLongerABoundary = !isReactRefreshBoundary(nextExports);
+                // It can also become ineligible if its exports are incompatible
                 // with the previous exports.
                 // For example, if you add/remove/change exports, we'll want
                 // to re-execute the importing modules, and force those components
@@ -33222,7 +33242,8 @@ function shouldInvalidateReactRefreshBoundary(prevExports, nextExports) {
         if (prevSignature[i] !== nextSignature[i]) return true;
     }
     return false;
-} // When this signature changes, it's unsafe to stop at this refresh boundary.
+}
+// When this signature changes, it's unsafe to stop at this refresh boundary.
 function getRefreshBoundarySignature(exports) {
     var signature = [];
     signature.push(Refresh.getFamilyByType(exports));
@@ -33251,10 +33272,11 @@ function registerExportsForReactRefresh(module1) {
         var desc = Object.getOwnPropertyDescriptor(exports, key);
         if (desc && desc.get && !isESM) continue;
         var exportValue = exports[key];
-        Refresh.register(exportValue, id + " %exports% " + key);
+        var typeID = id + " %exports% " + key;
+        Refresh.register(exportValue, typeID);
     }
 }
 
-},{"d2bd7fbc69ac29bf":"786KC"}],"lJZlQ":[function() {},{}]},["1xC6H","7a1Sg","d8Dch"], "d8Dch", "parcelRequireec08")
+},{"7422ead32dcc1e6b":"786KC"}],"lJZlQ":[function() {},{}]},["4s3Ar","1xC6H","d8Dch"], "d8Dch", "parcelRequireec08")
 
 //# sourceMappingURL=index.b4b6dfad.js.map
